@@ -1,4 +1,4 @@
-package com.empresa.inventario.model;
+package com.empresa.inventario.Model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

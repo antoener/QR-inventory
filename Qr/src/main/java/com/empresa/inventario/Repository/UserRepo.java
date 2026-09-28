@@ -1,5 +1,5 @@
 package com.empresa.inventario.Repository;
-import com.empresa.inventario.model.User;
+import com.empresa.inventario.Model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

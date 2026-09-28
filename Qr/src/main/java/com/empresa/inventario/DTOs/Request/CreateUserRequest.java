@@ -1,6 +1,6 @@
 package com.empresa.inventario.DTOs.Request;
 
-import com.empresa.inventario.enums.Role;
+import com.empresa.inventario.Enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,4 +1,4 @@
-package com.empresa.inventario.enums;
+package com.empresa.inventario.Enums;
 
 public enum Reason {
     PRODUCTION,

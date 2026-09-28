@@ -1,6 +1,6 @@
 package com.empresa.inventario.DTOs.Response;
 
-import com.empresa.inventario.enums.Role;
+import com.empresa.inventario.Enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

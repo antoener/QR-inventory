@@ -1,18 +1,12 @@
-package com.empresa.inventario.model;
-
-import com.empresa.inventario.enums.MovementType;
-import com.empresa.inventario.enums.Origin;
-import com.empresa.inventario.enums.Reason;
+package com.empresa.inventario.Model;
+import com.empresa.inventario.Enums.Role;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,40 +16,37 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 @Entity
-@Table(name = "stock_movement")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
-public class StockMovement {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    @Column(nullable = false)
+    private boolean mustChangePassword = true;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MovementType type;
-
-    @Column(nullable = false)
-    private int quantity;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Reason reason;
-
-    private String detail;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Origin origin;
-
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private Role role = Role.ADMIN;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
