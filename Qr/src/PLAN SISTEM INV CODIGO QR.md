@@ -516,3 +516,5 @@ Ver **sección 5.1** — las tres preguntas del punto abierto (QR tipo vs. unida
 10. [ ] Validar con 2–3 modelos reales antes de imprimir etiquetas
 11. [ ] Definir hosting + dominio del QR
 12. [ ] Verificar si la máquina tiene salida de datos para una futura integración por API
+
+13. Empezar la impl de IUserSrvice
