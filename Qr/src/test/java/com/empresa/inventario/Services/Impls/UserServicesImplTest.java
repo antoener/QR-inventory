@@ -4,6 +4,7 @@ import com.empresa.inventario.DTOs.Request.CreateUserRequest;
 import com.empresa.inventario.DTOs.Response.UserResponse;
 import com.empresa.inventario.Enums.Role;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
+import com.empresa.inventario.Exceptions.ResourceNotFoundException;
 import com.empresa.inventario.Model.User;
 import com.empresa.inventario.Repository.UserRepo;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Instant;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -93,6 +97,48 @@ class UserServicesImplTest {
                 .hasMessageContaining("email");
 
         verify(userRepo, never()).save(any());
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void findById_deberiaRetornarUserResponseCuandoElUsuarioExiste() {
+        Instant now = Instant.now();
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("jperez");
+        user.setEmail("jperez@empresa.com");
+        user.setName("Juan Perez");
+        user.setActive(true);
+        user.setMustChangePassword(true);
+        user.setRole(Role.ADMIN);
+        user.setCreatedAt(now);
+
+        when(userRepo.findById(1L)).thenReturn(Optional.of(user));
+
+        UserResponse response = userServices.findById(1L);
+
+        assertThat(response.getId()).isEqualTo(1L);
+        assertThat(response.getUsername()).isEqualTo("jperez");
+        assertThat(response.getEmail()).isEqualTo("jperez@empresa.com");
+        assertThat(response.getName()).isEqualTo("Juan Perez");
+        assertThat(response.isActive()).isTrue();
+        assertThat(response.isMustChangePassword()).isTrue();
+        assertThat(response.getRole()).isEqualTo(Role.ADMIN);
+        assertThat(response.getCreatedAt()).isEqualTo(now);
+
+        verify(userRepo).findById(1L);
+        verifyNoInteractions(passwordEncoder);
+    }
+
+    @Test
+    void findById_deberiaLanzarResourceNotFoundCuandoElUsuarioNoExiste() {
+        when(userRepo.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userServices.findById(99L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Resource not found");
+
+        verify(userRepo).findById(99L);
         verifyNoInteractions(passwordEncoder);
     }
 }

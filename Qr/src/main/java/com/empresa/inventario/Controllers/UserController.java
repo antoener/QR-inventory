@@ -6,6 +6,8 @@ import com.empresa.inventario.Services.IUserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,5 +32,13 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // Búsqueda de usuario por ID. Incluye usuarios inactivos: el front los
+    // distingue por el campo active del UserResponse. Si no existe, el servicio
+    // lanza ResourceNotFoundException y el GlobalExceptionHandler responde 404.
+    @GetMapping("/find/{id}")
+    public ResponseEntity<UserResponse> findById(@PathVariable Long id) {
+        UserResponse user = userService.findById(id);
+        return ResponseEntity.ok(user);
+    }
 
 }

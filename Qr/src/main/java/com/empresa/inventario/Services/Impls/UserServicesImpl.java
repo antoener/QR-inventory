@@ -3,6 +3,7 @@ import com.empresa.inventario.DTOs.Request.CreateUserRequest;
 import com.empresa.inventario.DTOs.Request.UpdateUserRequest;
 import com.empresa.inventario.DTOs.Response.UserResponse;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
+import com.empresa.inventario.Exceptions.ResourceNotFoundException;
 import com.empresa.inventario.Model.User;
 import com.empresa.inventario.Repository.UserRepo;
 import com.empresa.inventario.Services.IUserService;
@@ -49,15 +50,19 @@ public class UserServicesImpl implements IUserService {
 
         User saved = userRepo.save(user);
         // Se loguea solo el id: nunca la password ni datos sensibles.
-        logger.info("Usuario creado: id={}", saved.getId());
+        logger.info("User created: id={}", saved.getId());
 
         return toResponse(saved);
     }
 
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponse findById(Long id) {
-        return null;
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+        logger.info("User consulted: id={}", user.getId());
+        return toResponse(user);
     }
 
     @Override

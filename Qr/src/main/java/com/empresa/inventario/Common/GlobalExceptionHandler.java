@@ -1,6 +1,7 @@
 package com.empresa.inventario.Common;
 
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
+import com.empresa.inventario.Exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -23,6 +24,17 @@ public class GlobalExceptionHandler {
                 ex.getField(),
                 Instant.now());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // 404: recurso no encontrado (uso genérico para cualquier entidad).
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                null,
+                Instant.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 
     // 400: payload inválido (falla la validación del DTO de request).

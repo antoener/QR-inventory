@@ -12,7 +12,7 @@ public class DuplicateResourceException extends RuntimeException {
     private final String value;
 
     public DuplicateResourceException(String field, String value) {
-        super("El campo '" + field + "' con valor '" + value + "' ya está en uso");
+        super("Field '" + field + "' with value '" + value + "' is already in use");
         this.field = field;
         this.value = value;
     }
