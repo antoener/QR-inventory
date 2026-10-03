@@ -10,12 +10,14 @@ import java.util.Optional;
 public interface UserRepo extends JpaRepository<User, Long> {
 
 
-     // Busca un usuario por su username (único en el sistema).
-    Optional<User> findByUsername(String username);
+    // Busca un usuario por su username, ignorando mayúsculas/minúsculas.
+    // Username es único en el sistema.
+    Optional<User> findByUsernameIgnoreCase(String username);
 
 
-    // Busca un usuario por su email (único en el sistema).
-    Optional<User> findByEmail(String email);
+    // Busca un usuario por su email, ignorando mayúsculas/minúsculas.
+    // Email es único en el sistema.
+    Optional<User> findByEmailIgnoreCase(String email);
 
 
      // Verifica si existe un usuario con el username dado.
@@ -42,4 +44,11 @@ public interface UserRepo extends JpaRepository<User, Long> {
             "('%', :query, '%')) OR LOWER(u.name) LIKE LOWER" +
             "(CONCAT('%', :query, '%'))")
     List<User> searchByUsernameOrName(@Param("query") String query);
+
+    // Devuelve todos los usuarios (activos e inactivos) ordenados por id.
+    // Usado por IUserService.findAll().
+    List<User> findAllByOrderByIdAsc();
+
+    // Cuenta usuarios activos. Usado para evitar desactivar al último usuario activo.
+    long countByActiveTrue();
 }

@@ -1,5 +1,6 @@
 package com.empresa.inventario.Common;
 
+import com.empresa.inventario.Exceptions.BusinessRuleException;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
 import com.empresa.inventario.Exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,17 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
                 ex.getField(),
+                Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // 409: regla de negocio violada (p. ej. desactivar al último usuario activo).
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ApiError> handleBusinessRule(BusinessRuleException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                null,
                 Instant.now());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
