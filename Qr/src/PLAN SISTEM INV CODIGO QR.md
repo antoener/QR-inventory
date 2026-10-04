@@ -311,7 +311,9 @@ Elegir **2–3 modelos reales** y hacer la cuenta juntos: *"de este modelo, ¿cu
 
 **Auth** — `POST /api/auth/login` · `POST /api/auth/refresh` · `POST /api/auth/logout` · `GET /api/auth/me` · `POST /api/auth/forgot-password` · `POST /api/auth/reset-password` *(recuperación por email — pendiente de implementar)*
 
-**Products** — `GET /api/products?q=` (busca por código o nombre) · `GET /api/products/{id}` · `GET /api/products/code/{code}` ← *lo llama el escaneo* · `POST` · `PUT /{id}` · `PATCH /{id}/status` (activar/desactivar)
+**Products** — `GET /api/products?q=` (busca por código o nombre; `q` vacío o ausente devuelve todo el catálogo) · `GET /api/products/{id}` · `GET /api/products/code/{code}` ← *lo llama el escaneo* · `POST` · `PUT /{id}` · `PATCH /{id}/status` (activar/desactivar)
+
+> **Nota para el frontend:** `/api/products?q=` se usa para buscar o listar productos por nombre o código de forma parcial; por ejemplo, `/api/products?q=cuero`. Si `q` está vacío o no se envía, se devuelve todo el catálogo. Al escanear un QR se debe usar `GET /api/products/code/{code}` para resolver el código exacto del producto; esa búsqueda no pasa por `q`.
 
 **Movements** — `POST /api/movements/inbound` · `POST /api/movements/outbound` · `GET /api/movements?productId=&type=` · `GET /api/movements/recent`
 

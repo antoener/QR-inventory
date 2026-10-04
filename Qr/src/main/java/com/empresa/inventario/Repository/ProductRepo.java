@@ -22,8 +22,11 @@ public interface ProductRepo extends JpaRepository<Product, Long> {
     // Usado por IProductService.list(query) cuando la consulta está vacía.
     List<Product> findAllByOrderByIdAsc();
 
-    // Busca productos cuyo código o nombre contengan la query (case-insensitive).
+    // Busca productos cuyo código o nombre contengan la query (case-insensitive),
+    // ordenados por id ascendente.
     // Usado por IProductService.list(query) cuando hay un texto de búsqueda.
-    @Query("SELECT p FROM Product p WHERE LOWER(p.code) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT p FROM Product p WHERE LOWER(p.code) LIKE " +
+            "LOWER(CONCAT('%', :query, '%')) OR LOWER(p.name) LIKE " +
+            "LOWER(CONCAT('%', :query, '%')) ORDER BY p.id ASC")
     List<Product> searchByCodeOrName(@Param("query") String query);
 }
