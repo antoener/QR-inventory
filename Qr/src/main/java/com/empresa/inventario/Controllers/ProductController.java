@@ -72,7 +72,7 @@ public class ProductController {
 
     // Activa o desactiva un producto (baja lógica). No borra nada; conserva el historial.
     // No-op si ya está en el estado solicitado.
-    @PatchMapping("/{id}/status")
+    @PatchMapping("/{id}/set-status")
     public ResponseEntity<Void> setActive(
             @PathVariable Long id,
             @Valid @RequestBody UpdateProductStatusRequest request) {

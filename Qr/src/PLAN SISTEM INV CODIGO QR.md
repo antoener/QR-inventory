@@ -2,7 +2,7 @@
 
 > Documento vivo. Última actualización: **2026-09-27** (4ª vuelta) — **modelo de datos implementado** (entidades JPA en inglés: `User`, `Product`, `StockMovement` + enums en `enums/`), **se eliminó `AJUSTE`** (solo `INBOUND`/`OUTBOUND`), y **se agregó `email` a `User`** para recuperación de contraseña.
 >
-> **Estado:** modelo de datos creado. **Siguiente paso:** Fase 0 (bootstrap del proyecto) y Fase 1 (auth).
+> **Estado:** modelo de datos creado, DTOs de movimientos (`CreateStockMovementRequest`, `StockMovementResponse`) y enum `MovementPeriod` definidos, e interfaz `IStockMovement` con sus métodos acordados. **Última planeación:** el usuario elegirá `origin` (`MANUAL` / `MACHINE`) desde el frontend y el backend lo validará y guardará. El actor del movimiento se obtendrá del principal autenticado, nunca del request.
 >
 > **Nota de naming:** el código está **en inglés** (paquetes `model/`, `enums/`); este documento conserva la prosa en español pero usa los nombres reales del código.
 >
@@ -76,7 +76,7 @@ Estas decisiones quedaron cerradas en la sesión de planificación. **No reabrir
 | **Cómo entra el número** | **Un empleado lo lee y lo tipea** | Sin integración por API. Si más adelante se integra, el diseño ya lo contempla |
 | **Significado del stock** | "Cuánto **fabricamos**", no "cuánto hay en el estante" | Sin AJUSTE: las correcciones se hacen con INBOUND/OUTBOUND y el motivo correspondiente |
 | **Carga de producción** | **Atajo de 2 toques** desde la pantalla del producto | Botón grande arriba de todo → cantidad + confirmar, con `PRODUCTION` preseleccionado |
-| **`origin` del movimiento** | `MANUAL` \| `MACHINE` | Un movimiento de máquina **no se borra desde la app**: es la evidencia de producción |
+| **`origin` del movimiento** | `MANUAL` \| `MACHINE`, elegido por el usuario | En producción se preselecciona `MACHINE`, pero el backend recibe y valida el valor enviado. Un movimiento de máquina **no se borra desde la app**: es la evidencia de producción |
 | Escala de producción | Los **80 modelos a volumen similar** | Por eso el QR por unidad no se sostiene (ver 5.1) |
 
 ### Lo que se descartó explícitamente
@@ -410,7 +410,7 @@ Como la entrada viene de la máquina, cargar producción es lo que se va a hacer
 ```
 [Cargar producción]  →  pantalla de cantidad con teclado numérico grande
                           motivo: PRODUCTION  (preseleccionado, no se toca)
-                          origen: MACHINE       (automático)
+                          origen: MACHINE       (preseleccionado, editable)
                           → Confirmar  →  vuelve a la cámara
 ```
 
@@ -436,7 +436,7 @@ El `detail` libre queda disponible por si quieren anotar algo (ej: "turno mañan
 | 2 | **Productos** | CRUD, activar/desactivar, búsqueda por código y nombre, `description` opcional |
 | 3 | **Movimientos** | Motor de stock: inbound/outbound, validación de stock insuficiente, `@Version` para concurrencia, enums de motivos y `origin` |
 | 4 | **QR lectura** | Escaneo con cámara + fallback manual, ruta `/p/:code`, pantalla de producto con 3 acciones |
-| 5 | **Carga de producción** | Atajo de 2 toques, teclado numérico grande, `PRODUCTION` preseleccionado, `origin=MACHINE`, protección contra borrado |
+| 5 | **Carga de producción** | Atajo de 2 toques, teclado numérico grande, `PRODUCTION` preseleccionado, `origin=MACHINE` preseleccionado (editable), protección contra borrado |
 | 6 | **QR escritura** | Etiqueta individual + descarga en lote, selector de tamaño |
 | 7 | **Dashboard** | Vista general de stock + movimientos recientes + historial filtrable |
 | 8 | **Producción** | Tests, hardening (CSP/CORS), escaneo de dependencias OWASP, despliegue con HTTPS |
@@ -492,7 +492,7 @@ Ver **sección 5.1** — las tres preguntas del punto abierto (QR tipo vs. unida
 - [ ] Endpoints de stock bloqueados mientras `mustChangePassword = true`
 - [ ] `code` de producto único y con formato validado (es lo que va en el QR)
 - [ ] `@Version` para concurrencia de stock
-- [ ] Campo `origin` validado: `MANUAL` / `MACHINE` no modificable desde el cliente
+- [x] Campo `origin` validado: `MANUAL` / `MACHINE` enviado desde el cliente y validado por el backend
 - [ ] Movimientos con `origin=MACHINE` **no borrables** por la API
 - [ ] `detail` saneado y con largo máximo (nada de HTML crudo)
 - [ ] `email` único y validado en `User`; admin bootstrap con `email` desde `APP_ADMIN_EMAIL`
@@ -519,4 +519,9 @@ Ver **sección 5.1** — las tres preguntas del punto abierto (QR tipo vs. unida
 11. [ ] Definir hosting + dominio del QR
 12. [ ] Verificar si la máquina tiene salida de datos para una futura integración por API
 
-13. Empezar la impl de IUserSrvice
+13. [x] Empezar la impl de IUserService
+14. [x] Definir DTOs y enum `MovementPeriod` para movimientos
+15. [x] Definir métodos de `IStockMovement`
+16. [ ] **Implementar Fase 1 — Auth y autorización** (bloquea movimientos de stock)
+17. [ ] **Implementar `registerInbound`** (primera operación de `IStockMovement`): validación, transacción, actualización de `Product.stock` y registro completo del movimiento con usuario autenticado y `origin` elegido por el cliente
+18. [ ] Implementar `registerOutbound`, `getCurrentStock`, `findByPeriod` y `recent`
