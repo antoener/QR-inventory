@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -51,4 +52,20 @@ public class User {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+
+    // Ultima actividad registrada. Se usa para el inactivity timeout (15 min):
+    // si supera el umbral, el JwtAuthenticationFilter rechaza el token.
+    private Instant lastActivityAt;
+
+    // Momento del ultimo cambio de password. Sirve para invalidar todos los
+    // access tokens emitidos antes de ese instante (claim pwdAt del JWT).
+    @Column(nullable = false)
+    private Instant passwordChangedAt;
+
+    @PrePersist
+    void onCreate() {
+        if (passwordChangedAt == null) {
+            passwordChangedAt = Instant.now();
+        }
+    }
 }

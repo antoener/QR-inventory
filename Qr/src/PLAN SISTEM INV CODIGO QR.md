@@ -476,31 +476,31 @@ Ver **sección 5.1** — las tres preguntas del punto abierto (QR tipo vs. unida
 
 ## 13. Checklist de release (de la skill `springboot-security`)
 
-- [ ] Access/refresh tokens validados y expirando correctamente
-- [ ] Refresh token con rotación + detección de reuso
-- [ ] Rate limiting en `/api/auth/login`
-- [ ] BCrypt(12) como `PasswordEncoder` bean
-- [ ] CSRF deshabilitado (API stateless con Bearer) + `STATELESS` session policy
-- [ ] CORS con orígenes restringidos por env var (nunca `*`)
-- [ ] Headers de seguridad: CSP, frame-deny, no-referrer, nosniff
-- [ ] DTOs validados con Bean Validation, entidades nunca expuestas
-- [ ] Cero SQL por concatenación
+- [x] Access/refresh tokens validados y expirando correctamente
+- [x] Refresh token con rotación + detección de reuso
+- [x] Rate limiting en `/api/auth/login`
+- [x] BCrypt(12) como `PasswordEncoder` bean
+- [x] CSRF deshabilitado (API stateless con Bearer) + `STATELESS` session policy
+- [x] CORS con orígenes restringidos por env var (nunca `*`)
+- [x] Headers de seguridad: CSP, frame-deny, no-referrer, nosniff
+- [x] DTOs validados con Bean Validation, entidades nunca expuestas
+- [x] Cero SQL por concatenación
 - [ ] Secrets 100% por env vars, nada en `application.yml` — **y `DB_PASSWORD` sin default**: si falta, la app no arranca
 - [ ] `ddl-auto=validate` en prod (no `update`)
 - [ ] Sin claves duplicadas en el archivo de config
-- [ ] Admin bootstrap: password desde env var, `mustChangePassword=true`, seed solo si la tabla está vacía
+- [x] Admin bootstrap: password desde env var, `mustChangePassword=true`, seed solo si la tabla está vacía
 - [ ] Endpoints de stock bloqueados mientras `mustChangePassword = true`
 - [ ] `code` de producto único y con formato validado (es lo que va en el QR)
 - [ ] `@Version` para concurrencia de stock
 - [x] Campo `origin` validado: `MANUAL` / `MACHINE` enviado desde el cliente y validado por el backend
 - [ ] Movimientos con `origin=MACHINE` **no borrables** por la API
 - [ ] `detail` saneado y con largo máximo (nada de HTML crudo)
-- [ ] `email` único y validado en `User`; admin bootstrap con `email` desde `APP_ADMIN_EMAIL`
+- [x] `email` único y validado en `User`; admin bootstrap con `email` desde `APP_ADMIN_EMAIL`
 - [ ] Recuperación de contraseña: token hasheado de un solo uso, con expiración, respuesta genérica (no revela si el email existe)
 - [ ] Rate limiting en `/api/auth/forgot-password`
 - [ ] H2 console deshabilitado fuera de dev
 - [ ] Dependencias escaneadas (OWASP Dependency Check) sin CVEs críticos
-- [ ] Logs sin datos sensibles
+- [x] Logs sin datos sensibles
 
 ---
 
@@ -522,6 +522,7 @@ Ver **sección 5.1** — las tres preguntas del punto abierto (QR tipo vs. unida
 13. [x] Empezar la impl de IUserService
 14. [x] Definir DTOs y enum `MovementPeriod` para movimientos
 15. [x] Definir métodos de `IStockMovement`
-16. [ ] **Implementar Fase 1 — Auth y autorización** (bloquea movimientos de stock)
+16. [x] **Implementar Fase 1a — Auth (nucleo)**: login, refresh en cookie httpOnly con rotación + detección de reuso, blacklist de access tokens, rate-limit, BCrypt 12, `JwtAuthenticationFilter` + `WebSecurityConfig` con CSP/headers, `DataInitializer` (admin bootstrap) y `change-password`
+    - [ ] **Fase 1b — 2FA + recuperación de password**: 2FA TOTP opt-in por usuario (`googleauth`) y `forgot/reset-password` (mail) encima del núcleo validado
 17. [ ] **Implementar `registerInbound`** (primera operación de `IStockMovement`): validación, transacción, actualización de `Product.stock` y registro completo del movimiento con usuario autenticado y `origin` elegido por el cliente
 18. [ ] Implementar `registerOutbound`, `getCurrentStock`, `findByPeriod` y `recent`

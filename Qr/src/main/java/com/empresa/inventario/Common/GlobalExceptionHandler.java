@@ -2,6 +2,8 @@ package com.empresa.inventario.Common;
 
 import com.empresa.inventario.Exceptions.BusinessRuleException;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
+import com.empresa.inventario.Exceptions.InvalidCredentialsException;
+import com.empresa.inventario.Exceptions.InvalidPasswordException;
 import com.empresa.inventario.Exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +49,28 @@ public class GlobalExceptionHandler {
                 null,
                 Instant.now());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    // 401: credenciales invalidas o sesion no valida.
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ApiError> handleInvalidCredentials(InvalidCredentialsException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.UNAUTHORIZED.value(),
+                ex.getMessage(),
+                null,
+                Instant.now());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    // 400: politica de contrasenas violada (longitud/complejidad).
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ApiError> handleInvalidPassword(InvalidPasswordException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                "password",
+                Instant.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     // 400: payload inválido (falla la validación del DTO de request).

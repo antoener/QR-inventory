@@ -3,12 +3,11 @@ package com.empresa.inventario.Controllers;
 import com.empresa.inventario.DTOs.Response.ProductResponse;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
 import com.empresa.inventario.Exceptions.ResourceNotFoundException;
-import com.empresa.inventario.Security.SecurityConfig;
 import com.empresa.inventario.Services.IProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductController.class)
-@Import(SecurityConfig.class)
+@AutoConfigureMockMvc(addFilters = false)
 class ProductControllerTest {
 
     @Autowired
@@ -49,7 +48,7 @@ class ProductControllerTest {
 
         when(productService.findById(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/products/1")
+        mockMvc.perform(get("/api/products/id/1")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(1)))
@@ -68,7 +67,7 @@ class ProductControllerTest {
 
         when(productService.findById(1L)).thenReturn(response);
 
-        mockMvc.perform(get("/api/products/1")
+        mockMvc.perform(get("/api/products/id/1")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.active", is(false)));
@@ -79,7 +78,7 @@ class ProductControllerTest {
         when(productService.findById(99L))
                 .thenThrow(new ResourceNotFoundException("Resource not found"));
 
-        mockMvc.perform(get("/api/products/99")
+        mockMvc.perform(get("/api/products/id/99")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status", is(404)))
@@ -126,7 +125,7 @@ class ProductControllerTest {
 
         when(productService.list(null)).thenReturn(List.of(product1, product2));
 
-        mockMvc.perform(get("/api/products")
+        mockMvc.perform(get("/api/products/list")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size()", is(2)))
@@ -144,7 +143,7 @@ class ProductControllerTest {
 
         when(productService.list("tela")).thenReturn(List.of(product));
 
-        mockMvc.perform(get("/api/products")
+        mockMvc.perform(get("/api/products/list")
                         .param("q", "tela")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -157,7 +156,7 @@ class ProductControllerTest {
     void list_deberiaRetornar200ConListaVacia() throws Exception {
         when(productService.list("xyz")).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/products")
+        mockMvc.perform(get("/api/products/list")
                         .param("q", "xyz")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -173,7 +172,7 @@ class ProductControllerTest {
         when(productService.create(any(com.empresa.inventario.DTOs.Request.CreateProductRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/api/products/save")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\":\"BOL-001\",\"name\":\"Bolso cuero\",\"description\":\"Talle único\"}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -186,7 +185,7 @@ class ProductControllerTest {
 
     @Test
     void create_deberiaRetornar400ConPayloadInvalido() throws Exception {
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/api/products/save")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\":\"\",\"name\":\"\"}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -199,7 +198,7 @@ class ProductControllerTest {
         when(productService.create(any(com.empresa.inventario.DTOs.Request.CreateProductRequest.class)))
                 .thenThrow(new DuplicateResourceException("code", "BOL-001"));
 
-        mockMvc.perform(post("/api/products")
+        mockMvc.perform(post("/api/products/save")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\":\"BOL-001\",\"name\":\"Bolso cuero\"}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -217,7 +216,7 @@ class ProductControllerTest {
         when(productService.update(eq(1L), any(com.empresa.inventario.DTOs.Request.UpdateProductRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(put("/api/products/1")
+        mockMvc.perform(put("/api/products/update/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Bolso cuero marrón\",\"description\":\"Talle grande\"}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -230,7 +229,7 @@ class ProductControllerTest {
 
     @Test
     void update_deberiaRetornar400ConPayloadInvalido() throws Exception {
-        mockMvc.perform(put("/api/products/1")
+        mockMvc.perform(put("/api/products/update/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\"}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -243,7 +242,7 @@ class ProductControllerTest {
         when(productService.update(eq(99L), any(com.empresa.inventario.DTOs.Request.UpdateProductRequest.class)))
                 .thenThrow(new ResourceNotFoundException("Resource not found"));
 
-        mockMvc.perform(put("/api/products/99")
+        mockMvc.perform(put("/api/products/update/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Bolso cuero\",\"description\":\"Talle\"}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -254,7 +253,7 @@ class ProductControllerTest {
 
     @Test
     void setActive_deberiaRetornar204CuandoExiste() throws Exception {
-        mockMvc.perform(patch("/api/products/1/status")
+        mockMvc.perform(patch("/api/products/1/set-status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"active\":false}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -263,7 +262,7 @@ class ProductControllerTest {
 
     @Test
     void setActive_deberiaRetornar400CuandoElPayloadEsInvalido() throws Exception {
-        mockMvc.perform(patch("/api/products/1/status")
+        mockMvc.perform(patch("/api/products/1/set-status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}")
                         .accept(MediaType.APPLICATION_JSON))
@@ -276,7 +275,7 @@ class ProductControllerTest {
         doThrow(new ResourceNotFoundException("Resource not found"))
                 .when(productService).setActive(99L, false);
 
-        mockMvc.perform(patch("/api/products/99/status")
+        mockMvc.perform(patch("/api/products/99/set-status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"active\":false}")
                         .accept(MediaType.APPLICATION_JSON))

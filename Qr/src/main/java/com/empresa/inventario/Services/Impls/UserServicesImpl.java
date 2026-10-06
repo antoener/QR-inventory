@@ -7,6 +7,7 @@ import com.empresa.inventario.Exceptions.DuplicateResourceException;
 import com.empresa.inventario.Exceptions.ResourceNotFoundException;
 import com.empresa.inventario.Model.User;
 import com.empresa.inventario.Repository.UserRepo;
+import com.empresa.inventario.Security.PasswordValidator;
 import com.empresa.inventario.Services.IUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,9 @@ public class UserServicesImpl implements IUserService {
         if (userRepo.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("email", request.getEmail());
         }
+
+        // Politica de complejidad (8..72, mayus/minus/digito/especial).
+        PasswordValidator.validate(request.getPassword());
 
         User user = new User();
         user.setUsername(request.getUsername());

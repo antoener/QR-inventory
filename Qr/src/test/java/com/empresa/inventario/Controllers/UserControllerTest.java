@@ -5,12 +5,11 @@ import com.empresa.inventario.Enums.Role;
 import com.empresa.inventario.Exceptions.BusinessRuleException;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
 import com.empresa.inventario.Exceptions.ResourceNotFoundException;
-import com.empresa.inventario.Security.SecurityConfig;
 import com.empresa.inventario.Services.IUserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // Tests de la capa web para UserController. Solo carga el controller y sus
 // dependencias, sin contexto completo de Spring ni base de datos.
 @WebMvcTest(UserController.class)
-@Import(SecurityConfig.class)
+@AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
     @Autowired

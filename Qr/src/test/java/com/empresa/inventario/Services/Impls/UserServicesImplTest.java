@@ -50,7 +50,7 @@ class UserServicesImplTest {
         request = new CreateUserRequest();
         request.setUsername("jperez");
         request.setEmail("jperez@empresa.com");
-        request.setPassword("secreto123");
+        request.setPassword("Secreto123!");
         request.setName("Juan Perez");
         request.setRole(Role.ADMIN);
     }
@@ -59,7 +59,7 @@ class UserServicesImplTest {
     void create_deberiaHashearLaPasswordYGuardarElUsuario() {
         when(userRepo.existsByUsername("jperez")).thenReturn(false);
         when(userRepo.existsByEmail("jperez@empresa.com")).thenReturn(false);
-        when(passwordEncoder.encode("secreto123")).thenReturn("$2a$12$hash");
+        when(passwordEncoder.encode("Secreto123!")).thenReturn("$2a$12$hash");
         when(userRepo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UserResponse response = userServices.create(request);
@@ -75,7 +75,7 @@ class UserServicesImplTest {
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepo).save(captor.capture());
         assertThat(captor.getValue().getPassword()).isEqualTo("$2a$12$hash");
-        verify(passwordEncoder).encode("secreto123");
+        verify(passwordEncoder).encode("Secreto123!");
     }
 
     @Test
