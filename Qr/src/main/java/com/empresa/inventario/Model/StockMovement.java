@@ -47,6 +47,7 @@ public class StockMovement {
     @Column(nullable = false)
     private Reason reason;
 
+    @Column(length = 255)
     private String detail;
 
     @Enumerated(EnumType.STRING)

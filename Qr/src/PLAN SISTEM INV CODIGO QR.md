@@ -524,5 +524,80 @@ Ver **sección 5.1** — las tres preguntas del punto abierto (QR tipo vs. unida
 15. [x] Definir métodos de `IStockMovement`
 16. [x] **Implementar Fase 1a — Auth (nucleo)**: login, refresh en cookie httpOnly con rotación + detección de reuso, blacklist de access tokens, rate-limit, BCrypt 12, `JwtAuthenticationFilter` + `WebSecurityConfig` con CSP/headers, `DataInitializer` (admin bootstrap) y `change-password`
     - [ ] **Fase 1b — 2FA + recuperación de password**: 2FA TOTP opt-in por usuario (`googleauth`) y `forgot/reset-password` (mail) encima del núcleo validado
-17. [ ] **Implementar `registerInbound`** (primera operación de `IStockMovement`): validación, transacción, actualización de `Product.stock` y registro completo del movimiento con usuario autenticado y `origin` elegido por el cliente
-18. [ ] Implementar `registerOutbound`, `getCurrentStock`, `findByPeriod` y `recent`
+17. [x] **Implementar `registerInbound`** (primera operación de `IStockMovement`): validación, transacción, actualización de `Product.stock` y registro completo del movimiento con usuario autenticado y `origin` elegido por el cliente
+18. [x] Implementar `registerOutbound` y `getCurrentStock`
+19. [ ] Implementar `findByPeriod` y `recent` de `IStockMovement` + endpoints `GET /api/movements?productId=&type=` y `GET /api/movements/recent`
+
+---
+
+## 15. Estado de la sesión de trabajo — Frontend
+
+> Última actualización: **2026-10-06**. El backend de movimientos (inbound/outbound/stock) y su controller están listos y con tests. El frontend se construyó por fases; **la fase 5 quedó escrita pero sin cerrar**.
+
+### Hecho
+| Fase | Contenido | Estado |
+|---|---|---|
+| 0 | Scaffold Vite/React/TS/Tailwind, proxy `/api`, alias `@/`, PWA manifest, `.env` | ✅ build OK |
+| 1 | Capa API: `client.ts` (token en memoria + auto-refresh en 401), endpoints, hooks TanStack Query, `AuthContext` | ✅ build OK |
+| 2 | UI auth: `Button`/`Input`/`Card`, `LoginPage`, `ChangePasswordPage`, `AuthGuard`/`PublicOnlyGuard`, `AppLayout`, router | ✅ build OK |
+| 3 | Productos: `ProductsPage` (listado + búsqueda + modal alta/edición + activar/desactivar) | ✅ build OK |
+| 4 | Escáner: `Scanner` (`@zxing/browser` + fallback manual), `ScannerPage`, `ProductDetailPage` (stock grande + atajo producción + 3 acciones), `MovementFormPage` | ✅ build OK |
+| 5 | `MovementsPage` (entrada/salida + selector de producto + form con reintento 409 + últimos movimientos locales) | ⚠️ **escrita, ruta sin montar y build sin verificar** |
+
+### Lo inmediato (retomar acá)
+1. Importar `MovementsPage` en `frontend/src/routes/index.tsx` y reemplazar el placeholder `<div>Movimientos</div>` (línea 27).
+2. Correr `npm run build` y verificar tipos.
+3. Opcional: reemplazar el `window.location.href = '/scanner'` de `HomePage.tsx` por `useNavigate`.
+4. El historial de "últimos movimientos" de Fase 5 es `useState` local; se pierde al recargar. Al implementar `GET /api/movements/recent` (ítem 19) pasarlo a TanStack Query.
+
+### Fases restantes
+| Fase | Contenido | Punto de partida |
+|---|---|---|
+| 6 | **Etiquetas QR**: etiqueta individual desde ficha + pantalla `/etiquetas` modo lote con casillas, PDF en grilla, tamaños 3×3 / 5×5 / 10×10 cm. Usa `qrcode.react` + `jspdf` (ya en deps). 100% navegador, sin backend. | `features/labels/` vacío |
+| 7 | **Usuarios**: pantalla listado, alta de admin, activar/desactivar. Hooks ya listos. | `features/users/hooks.ts` existe, falta UI |
+| 8 | **Dashboard**: stock general + movimientos recientes + historial filtrable. Depende del ítem 19. | `features/dashboard/` vacío |
+
+### Backend pendiente que habilitan fases
+- **Movements** (ítem 19): `GET /api/movements?productId=&type=` y `GET /api/movements/recent`.
+- **Dashboard**: `GET /api/dashboard/summary` — no existe el controller.
+- **Auth**: `POST /api/auth/forgot-password` y `POST /api/auth/reset-password` (email; en dev el link se loguea) + rate-limit en forgot-password.
+- Bloquear endpoints de stock mientras `mustChangePassword = true`.
+
+### Orden sugerido
+1. Cerrar Fase 5 (router + build).
+2. Fase 6 (etiquetas) — independiente de la reunión y del backend.
+3. Fase 7 (usuarios) — backend listo.
+4. Backend `recent`/`findByPeriod` → Fase 8 (dashboard).
+
+### Notas de entorno
+- Maven requiere `JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64` (proyecto apunta a Java 17, solo hay JDK 21).
+- Tests backend: correr solo el test de la clase recién tocada (`-Dtest="StockMovementImplTest#..."`); suite completa con `DB_URL='jdbc:mysql://192.168.112.1:3306/qr_db?serverTimezone=UTC'`.
+- Bundle frontend ~890 kB por `@zxing` + `jspdf` + `qrcode.react`; evaluar code-split en Fases 6/8.
+- `VITE_QR_BASE_URL=http://localhost:3000` es placeholder hasta definir dominio del QR.
+- **HTTPS obligatorio** para la cámara en iPhone (probar con túnel ngrok/Cloudflare).
+
+---
+
+## 16. Por Implementar inmediato
+
+Backend de movimientos y fases 0–5 del frontend listas (build OK). Falta:
+
+1. **Fase 6 — Etiquetas QR** (`features/labels/` vacío)
+   - Etiqueta individual desde la ficha del producto.
+   - Pantalla `/etiquetas` modo lote con casillas, PDF en grilla.
+   - Tamaños 3×3 / 5×5 / 10×10 cm con `qrcode.react` + `jspdf`. Sin backend.
+
+2. **Fase 7 — Usuarios** (hooks listos en `features/users/hooks.ts`, falta la UI)
+   - Listado de usuarios, alta de admin, activar/desactivar.
+
+3. **Fase 8 — Dashboard** (`features/dashboard/` vacío)
+   - Stock general + movimientos recientes + historial filtrable por período.
+   - Depende del backend `recent`/`findByPeriod`.
+
+4. **Backend pendiente**
+   - `GET /api/movements?productId=&type=` y `GET /api/movements/recent` (ítem 19 del §14).
+   - `GET /api/dashboard/summary` (no existe el controller).
+   - `POST /api/auth/forgot-password` y `POST /api/auth/reset-password` (email; en dev el link se loguea) + rate-limit.
+   - Bloquear endpoints de stock mientras `mustChangePassword = true`.
+
+**Orden sugerido:** Fase 6 → Fase 7 → backend `recent`/`findByPeriod` → Fase 8.

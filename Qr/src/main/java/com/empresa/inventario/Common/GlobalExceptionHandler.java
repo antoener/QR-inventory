@@ -4,7 +4,9 @@ import com.empresa.inventario.Exceptions.BusinessRuleException;
 import com.empresa.inventario.Exceptions.DuplicateResourceException;
 import com.empresa.inventario.Exceptions.InvalidCredentialsException;
 import com.empresa.inventario.Exceptions.InvalidPasswordException;
+import com.empresa.inventario.Exceptions.InvalidRequestException;
 import com.empresa.inventario.Exceptions.ResourceNotFoundException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -85,5 +87,28 @@ public class GlobalExceptionHandler {
                 null,
                 Instant.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // 400: regla de negocio sobre el payload que no puede expresarse con anotaciones.
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                null,
+                Instant.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // 409: conflicto de concurrencia optimista (dos movimientos simultáneos sobre el
+    // mismo producto). El cliente debe reintentar.
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleOptimisticLock(OptimisticLockingFailureException ex) {
+        ApiError error = new ApiError(
+                HttpStatus.CONFLICT.value(),
+                "Stock changed by another operation. Please try again.",
+                null,
+                Instant.now());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 }
