@@ -25,4 +25,12 @@ public interface IAuthService {
     // Cambia la contrasena del usuario autenticado. Invalida todos los tokens
     // previos (claim pwdAt) y revoca todos los refresh tokens.
     void changePassword(ChangePasswordRequest request);
+
+    // Inicia el flujo de recuperacion de contrasena. Envio (o loguea) un link
+    // con token de un solo uso. La respuesta es siempre generica.
+    void forgotPassword(String email);
+
+    // Resetea la contrasena usando un token valido, no expirado y no usado.
+    // Revoca todos los refresh tokens del usuario.
+    void resetPassword(String token, String newPassword);
 }

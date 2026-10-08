@@ -2,6 +2,7 @@ package com.empresa.inventario.Services.Impls;
 
 import com.empresa.inventario.DTOs.Request.CreateStockMovementRequest;
 import com.empresa.inventario.DTOs.Response.StockMovementResponse;
+import com.empresa.inventario.Enums.MovementPeriod;
 import com.empresa.inventario.Enums.MovementType;
 import com.empresa.inventario.Enums.Origin;
 import com.empresa.inventario.Enums.Reason;
@@ -23,11 +24,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -358,5 +362,44 @@ class StockMovementImplTest {
         assertThatThrownBy(() -> stockMovementService.getCurrentStock(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Product not found");
+    }
+
+    @Test
+    void findByPeriod_deberiaDelegarAlRepoYDevolverRespuestas() {
+        StockMovement movement = buildMovement(200L, MovementType.INBOUND, Reason.PRODUCTION, Origin.MACHINE);
+        when(stockMovementRepo.findByFilters(any(Instant.class), eq(1L), eq(MovementType.INBOUND)))
+                .thenReturn(List.of(movement));
+
+        List<StockMovementResponse> result = stockMovementService.findByPeriod(
+                MovementPeriod.TODAY, 1L, MovementType.INBOUND);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(200L);
+        assertThat(result.get(0).getType()).isEqualTo(MovementType.INBOUND);
+    }
+
+    @Test
+    void recent_deberiaDevolverLosUltimosMovimientos() {
+        StockMovement movement = buildMovement(201L, MovementType.OUTBOUND, Reason.SALE, Origin.MANUAL);
+        when(stockMovementRepo.findTop20ByOrderByCreatedAtDesc()).thenReturn(List.of(movement));
+
+        List<StockMovementResponse> result = stockMovementService.recent();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(201L);
+        assertThat(result.get(0).getType()).isEqualTo(MovementType.OUTBOUND);
+    }
+
+    private StockMovement buildMovement(Long id, MovementType type, Reason reason, Origin origin) {
+        StockMovement movement = new StockMovement();
+        movement.setId(id);
+        movement.setProduct(product);
+        movement.setUser(user);
+        movement.setType(type);
+        movement.setQuantity(5);
+        movement.setReason(reason);
+        movement.setOrigin(origin);
+        movement.setCreatedAt(Instant.now());
+        return movement;
     }
 }

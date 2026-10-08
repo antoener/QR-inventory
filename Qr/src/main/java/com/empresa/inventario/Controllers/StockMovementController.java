@@ -2,6 +2,8 @@ package com.empresa.inventario.Controllers;
 
 import com.empresa.inventario.DTOs.Request.CreateStockMovementRequest;
 import com.empresa.inventario.DTOs.Response.StockMovementResponse;
+import com.empresa.inventario.Enums.MovementPeriod;
+import com.empresa.inventario.Enums.MovementType;
 import com.empresa.inventario.Services.IStockMovement;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -11,7 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 // Endpoints REST de movimientos de stock. Sin logica: todo delega a IStockMovement.
 @RestController
@@ -48,5 +53,21 @@ public class StockMovementController {
     public ResponseEntity<Integer> getCurrentStock(@PathVariable Long productId) {
         int stock = stockMovementService.getCurrentStock(productId);
         return ResponseEntity.ok(stock);
+    }
+
+    // Historial de movimientos filtrable por periodo, producto y tipo.
+    // Si no se envia period se devuelve todo el historial (desde Instant.EPOCH).
+    @GetMapping
+    public ResponseEntity<List<StockMovementResponse>> findByPeriod(
+            @RequestParam(required = false) MovementPeriod period,
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) MovementType type) {
+        return ResponseEntity.ok(stockMovementService.findByPeriod(period, productId, type));
+    }
+
+    // Ultimos 20 movimientos sin importar filtro.
+    @GetMapping("/recent")
+    public ResponseEntity<List<StockMovementResponse>> recent() {
+        return ResponseEntity.ok(stockMovementService.recent());
     }
 }

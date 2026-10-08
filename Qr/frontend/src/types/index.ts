@@ -76,6 +76,26 @@ export interface StockMovementResponse {
   createdAt: string;
 }
 
+export interface DashboardSummaryResponse {
+  totalProducts: number;
+  activeProducts: number;
+  totalStock: number;
+  inboundTodayCount: number;
+  inboundTodayUnits: number;
+  outboundTodayCount: number;
+  outboundTodayUnits: number;
+  recentMovements: StockMovementResponse[];
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export interface LoginRequest {
   identifier: string;
   password: string;

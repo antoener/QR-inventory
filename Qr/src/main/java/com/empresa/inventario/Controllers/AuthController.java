@@ -1,7 +1,9 @@
 package com.empresa.inventario.Controllers;
 
 import com.empresa.inventario.DTOs.Request.ChangePasswordRequest;
+import com.empresa.inventario.DTOs.Request.ForgotPasswordRequest;
 import com.empresa.inventario.DTOs.Request.LoginRequest;
+import com.empresa.inventario.DTOs.Request.ResetPasswordRequest;
 import com.empresa.inventario.DTOs.Response.AuthResponse;
 import com.empresa.inventario.DTOs.Response.UserResponse;
 import com.empresa.inventario.Services.IAuthService;
@@ -65,6 +67,21 @@ public class AuthController {
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Solicita enlace de recuperacion de contrasena por email.
+    // Respuesta siempre 204 (anti-enumeracion).
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request.getEmail());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Resetea la contrasena usando token de un solo uso.
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.noContent().build();
     }
 }

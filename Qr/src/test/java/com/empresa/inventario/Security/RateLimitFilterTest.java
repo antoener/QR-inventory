@@ -15,7 +15,7 @@ class RateLimitFilterTest {
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     private RateLimitFilter filter(int loginMax, long loginWindow, int globalMax, long globalWindow) {
-        return new RateLimitFilter(objectMapper, loginMax, loginWindow, globalMax, globalWindow, "");
+        return new RateLimitFilter(objectMapper, loginMax, loginWindow, 5, 60, globalMax, globalWindow, "");
     }
 
     private MockHttpServletRequest loginRequest() {

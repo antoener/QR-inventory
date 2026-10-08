@@ -28,27 +28,35 @@ import java.util.stream.Collectors;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/api/auth/login";
+    private static final String FORGOT_PASSWORD_PATH = "/api/auth/forgot-password";
 
     private final ObjectMapper objectMapper;
     private final int loginMaxRequests;
     private final long loginWindowSeconds;
+    private final int forgotMaxRequests;
+    private final long forgotWindowSeconds;
     private final int globalMaxRequests;
     private final long globalWindowSeconds;
     private final Set<String> trustedProxies;
 
     private final Map<String, LinkedList<Long>> loginAttempts = new ConcurrentHashMap<>();
+    private final Map<String, LinkedList<Long>> forgotPasswordAttempts = new ConcurrentHashMap<>();
     private final Map<String, LinkedList<Long>> apiRequests = new ConcurrentHashMap<>();
 
     public RateLimitFilter(
             ObjectMapper objectMapper,
             @Value("${app.security.rate-limit.login-attempts:5}") int loginMaxRequests,
             @Value("${app.security.rate-limit.login-window-seconds:60}") long loginWindowSeconds,
+            @Value("${app.security.rate-limit.forgot-attempts:5}") int forgotMaxRequests,
+            @Value("${app.security.rate-limit.forgot-window-seconds:60}") long forgotWindowSeconds,
             @Value("${app.security.rate-limit.global-attempts:200}") int globalMaxRequests,
             @Value("${app.security.rate-limit.global-window-seconds:60}") long globalWindowSeconds,
             @Value("${app.security.trusted-proxies:}") String trustedProxies) {
         this.objectMapper = objectMapper;
         this.loginMaxRequests = loginMaxRequests;
         this.loginWindowSeconds = loginWindowSeconds;
+        this.forgotMaxRequests = forgotMaxRequests;
+        this.forgotWindowSeconds = forgotWindowSeconds;
         this.globalMaxRequests = globalMaxRequests;
         this.globalWindowSeconds = globalWindowSeconds;
         this.trustedProxies = Arrays.stream(trustedProxies.split(","))
@@ -77,6 +85,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
         if (LOGIN_PATH.equals(uri)
                 && isRateLimited(loginAttempts, clientIp, now, loginMaxRequests, loginWindowSeconds)) {
+            writeTooManyRequests(response);
+            return;
+        }
+
+        if (FORGOT_PASSWORD_PATH.equals(uri)
+                && isRateLimited(forgotPasswordAttempts, clientIp, now, forgotMaxRequests, forgotWindowSeconds)) {
             writeTooManyRequests(response);
             return;
         }
@@ -122,6 +136,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     public void cleanup() {
         long now = System.currentTimeMillis();
         cleanupMap(loginAttempts, now, loginWindowSeconds);
+        cleanupMap(forgotPasswordAttempts, now, forgotWindowSeconds);
         cleanupMap(apiRequests, now, globalWindowSeconds);
     }
 

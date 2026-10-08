@@ -23,17 +23,25 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 // Autentica requests con access token JWT (header Authorization: Bearer ...).
 // En orden: valida firma, descarta tokens revocados (logout), verifica que el
 // usuario exista y este activo, que el password no haya cambiado despues de
-// emitir el token (claim pwdAt) y el inactivity timeout. El throttle persiste
-// lastActivityAt como maximo una vez cada 5 minutos.
-// Se registra como @Bean en SecurityConfig (no @Component) para no duplicarse
-// como filtro de servlet y para no interferir con el slice de @WebMvcTest.
+// emitir el token (claim pwdAt), el inactivity timeout y que no deba cambiar
+// password (mustChangePassword). El throttle persiste lastActivityAt como maximo
+// una vez cada 5 minutos. Se registra como @Bean en SecurityConfig.
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final long LAST_ACTIVITY_WRITE_THROTTLE_MINUTES = 5;
+
+    // Endpoints permitidos aun cuando mustChangePassword == true.
+    private static final Set<String> ALLOWED_WHEN_MUST_CHANGE_PASSWORD = Set.of(
+            "/api/auth/change-password",
+            "/api/auth/reset-password",
+            "/api/auth/logout",
+            "/api/auth/me"
+    );
 
     private final JwtUtil jwtUtil;
     private final UserRepo userRepo;
@@ -86,6 +94,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Bloqueo mustChangePassword: solo permite endpoints de cambio de password,
+        // logout y me. Resto -> 403 Forbidden.
+        String requestUri = request.getRequestURI();
+        if (user.isMustChangePassword() && !ALLOWED_WHEN_MUST_CHANGE_PASSWORD.contains(requestUri)) {
+            writeForbidden(response, "Debes cambiar tu contraseña temporal antes de continuar");
+            return;
+        }
+
         // Invalidacion por cambio de password: token emitido antes del ultimo cambio.
         Long tokenPwdAt = jwtUtil.extractPasswordChangedAt(claims);
         if (tokenPwdAt != null && user.getPasswordChangedAt() != null
@@ -125,5 +141,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(), new ApiError(401, message, null, Instant.now()));
+    }
+
+    private void writeForbidden(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        objectMapper.writeValue(response.getWriter(), new ApiError(403, message, null, Instant.now()));
     }
 }

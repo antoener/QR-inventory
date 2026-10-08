@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
-import { QrCode, Package, ArrowLeftRight, ScanLine, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, ArrowLeftRight, Tag, Users, ScanLine, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useLogout } from '@/features/auth/hooks';
@@ -10,9 +10,11 @@ export function AppLayout() {
   const logout = useLogout();
 
   const navItems = [
-    { to: '/', icon: QrCode, label: 'Escanear' },
+    { to: '/', icon: LayoutDashboard, label: 'Inicio' },
     { to: '/products', icon: Package, label: 'Productos' },
     { to: '/movements', icon: ArrowLeftRight, label: 'Movimientos' },
+    { to: '/etiquetas', icon: Tag, label: 'Etiquetas' },
+    { to: '/users', icon: Users, label: 'Usuarios' },
   ];
 
   return (

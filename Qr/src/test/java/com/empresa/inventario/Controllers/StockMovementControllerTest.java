@@ -2,6 +2,7 @@ package com.empresa.inventario.Controllers;
 
 import com.empresa.inventario.DTOs.Request.CreateStockMovementRequest;
 import com.empresa.inventario.DTOs.Response.StockMovementResponse;
+import com.empresa.inventario.Enums.MovementPeriod;
 import com.empresa.inventario.Enums.MovementType;
 import com.empresa.inventario.Enums.Origin;
 import com.empresa.inventario.Enums.Reason;
@@ -17,6 +18,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
@@ -113,6 +115,33 @@ class StockMovementControllerTest {
         request.setReason(reason);
         request.setOrigin(origin);
         return request;
+    }
+
+    @Test
+    void findByPeriod_deberiaRetornar200ConListaFiltrada() throws Exception {
+        StockMovementResponse response = buildResponse(3L, MovementType.INBOUND, Reason.PRODUCTION, Origin.MACHINE);
+
+        when(stockMovementService.findByPeriod(MovementPeriod.TODAY, 1L, MovementType.INBOUND))
+                .thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/movements?period=TODAY&productId=1&type=INBOUND")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(3)))
+                .andExpect(jsonPath("$[0].type", is("INBOUND")));
+    }
+
+    @Test
+    void recent_deberiaRetornar200ConLista() throws Exception {
+        StockMovementResponse response = buildResponse(4L, MovementType.OUTBOUND, Reason.SALE, Origin.MANUAL);
+
+        when(stockMovementService.recent()).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/movements/recent")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(4)))
+                .andExpect(jsonPath("$[0].type", is("OUTBOUND")));
     }
 
     private StockMovementResponse buildResponse(Long id, MovementType type, Reason reason, Origin origin) {

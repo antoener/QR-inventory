@@ -1,8 +1,11 @@
 import { ScanLine } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 
 export function HomePage() {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Bienvenido</h1>
@@ -12,7 +15,7 @@ export function HomePage() {
           <p className="text-center text-gray-600">
             Escaneá un código QR o buscá un producto para ver su stock y registrar movimientos.
           </p>
-          <Button size="lg" onClick={() => window.location.href = '/scanner'}>
+          <Button size="lg" onClick={() => navigate('/scanner')}>
             Escanear QR
           </Button>
         </CardContent>

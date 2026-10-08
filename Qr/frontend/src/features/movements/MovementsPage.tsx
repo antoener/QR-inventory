@@ -4,10 +4,15 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { useProducts } from '@/features/products/hooks';
-import { useRegisterInbound, useRegisterOutbound } from '@/features/movements/hooks';
+import {
+  useMovements,
+  useRecentMovements,
+  useRegisterInbound,
+  useRegisterOutbound,
+} from '@/features/movements/hooks';
 import { ApiClientError } from '@/api';
 import { cn } from '@/lib/utils';
-import { MovementType, Origin, Reason, type ProductResponse, type StockMovementResponse } from '@/types';
+import { MovementPeriod, MovementType, Origin, Reason, type ProductResponse, type StockMovementResponse } from '@/types';
 
 const inboundReasons: Reason[] = [Reason.PRODUCTION, Reason.MATERIAL_PURCHASE, Reason.CUSTOMER_RETURN];
 const outboundReasons: Reason[] = [Reason.SALE, Reason.WASTE, Reason.INTERNAL_USE, Reason.GIFT, Reason.LOSS];
@@ -28,6 +33,7 @@ function MovementForm({ product, type, onSuccess, onCancel }: MovementFormProps)
 
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState<Reason>(reasons[0]);
+  const [origin, setOrigin] = useState<Origin>(Origin.MANUAL);
   const [detail, setDetail] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -47,7 +53,7 @@ function MovementForm({ product, type, onSuccess, onCancel }: MovementFormProps)
         productId: product.id,
         quantity: qty,
         reason,
-        origin: Origin.MANUAL,
+        origin: isInbound ? origin : Origin.MANUAL,
         detail: detail.trim() || undefined,
       });
       onSuccess(result);
@@ -82,6 +88,24 @@ function MovementForm({ product, type, onSuccess, onCancel }: MovementFormProps)
             ))}
           </div>
         </div>
+
+        {isInbound && (
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Origen</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[Origin.MANUAL, Origin.MACHINE].map((o) => (
+                <Button
+                  key={o}
+                  type="button"
+                  variant={origin === o ? 'primary' : 'secondary'}
+                  onClick={() => setOrigin(o)}
+                >
+                  {o === Origin.MANUAL ? 'Manual' : 'Máquina'}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Input
           label="Cantidad"
@@ -168,14 +192,37 @@ function ProductSelector({ onSelect }: { onSelect: (product: ProductResponse) =>
   );
 }
 
+const periodOptions: { value: MovementPeriod | undefined; label: string }[] = [
+  { value: undefined, label: 'Todos' },
+  { value: MovementPeriod.TODAY, label: 'Hoy' },
+  { value: MovementPeriod.THIS_WEEK, label: 'Esta semana' },
+  { value: MovementPeriod.THIS_MONTH, label: 'Este mes' },
+];
+
+const typeOptions: { value: MovementType | undefined; label: string }[] = [
+  { value: undefined, label: 'Todos' },
+  { value: MovementType.INBOUND, label: 'Entradas' },
+  { value: MovementType.OUTBOUND, label: 'Salidas' },
+];
+
 export function MovementsPage() {
   const [step, setStep] = useState<'menu' | 'select-product' | 'form'>('menu');
   const [selectedType, setSelectedType] = useState<MovementType>(MovementType.INBOUND);
   const [selectedProduct, setSelectedProduct] = useState<ProductResponse | null>(null);
-  const [recentMovements, setRecentMovements] = useState<StockMovementResponse[]>([]);
+  const [filterPeriod, setFilterPeriod] = useState<MovementPeriod | undefined>();
+  const [filterType, setFilterType] = useState<MovementType | undefined>();
 
-  const handleSuccess = (movement: StockMovementResponse) => {
-    setRecentMovements((prev) => [movement, ...prev].slice(0, 10));
+  const { data: recentMovements, isLoading: isLoadingRecent } = useRecentMovements();
+  const { data: filteredMovements, isLoading: isLoadingFiltered } = useMovements({
+    period: filterPeriod,
+    type: filterType,
+  });
+
+  const hasFilters = filterPeriod !== undefined || filterType !== undefined;
+  const displayedMovements = hasFilters ? filteredMovements : recentMovements;
+  const isLoadingMovements = hasFilters ? isLoadingFiltered : isLoadingRecent;
+
+  const handleSuccess = () => {
     setStep('menu');
     setSelectedProduct(null);
   };
@@ -205,29 +252,77 @@ export function MovementsPage() {
             </Button>
           </div>
 
-          {recentMovements.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Últimos movimientos</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {recentMovements.map((m, idx) => (
-                  <div key={`${m.id}-${idx}`} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 text-sm">
-                    <div>
-                      <p className="font-medium text-gray-900">{m.productName}</p>
-                      <p className="text-gray-500">{m.reason.replace(/_/g, ' ')}</p>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Historial</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Período</label>
+                <div className="flex flex-wrap gap-2">
+                  {periodOptions.map((opt) => (
+                    <Button
+                      key={opt.label}
+                      type="button"
+                      size="sm"
+                      variant={filterPeriod === opt.value ? 'primary' : 'secondary'}
+                      onClick={() => setFilterPeriod(opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Tipo</label>
+                <div className="flex flex-wrap gap-2">
+                  {typeOptions.map((opt) => (
+                    <Button
+                      key={opt.label}
+                      type="button"
+                      size="sm"
+                      variant={filterType === opt.value ? 'primary' : 'secondary'}
+                      onClick={() => setFilterType(opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {isLoadingMovements && (
+                <div className="flex justify-center py-6">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+                </div>
+              )}
+
+              {!isLoadingMovements && (!displayedMovements || displayedMovements.length === 0) && (
+                <div className="rounded-lg bg-gray-100 p-4 text-center text-gray-600">
+                  No hay movimientos para los filtros seleccionados
+                </div>
+              )}
+
+              {!isLoadingMovements && displayedMovements && displayedMovements.length > 0 && (
+                <div className="space-y-2">
+                  {displayedMovements.map((m, idx) => (
+                    <div key={`${m.id}-${idx}`} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 text-sm">
+                      <div>
+                        <p className="font-medium text-gray-900">{m.productName}</p>
+                        <p className="text-gray-500">{m.reason.replace(/_/g, ' ')} · {m.userName}</p>
+                      </div>
+                      <span className={cn(
+                        'font-bold',
+                        m.type === MovementType.INBOUND ? 'text-green-600' : 'text-red-600'
+                      )}>
+                        {m.type === MovementType.INBOUND ? '+' : '-'}{m.quantity}
+                      </span>
                     </div>
-                    <span className={cn(
-                      'font-bold',
-                      m.type === MovementType.INBOUND ? 'text-green-600' : 'text-red-600'
-                    )}>
-                      {m.type === MovementType.INBOUND ? '+' : '-'}{m.quantity}
-                    </span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
 

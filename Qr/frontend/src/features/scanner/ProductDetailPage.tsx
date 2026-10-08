@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, Minus, Package, Plus, Search } from 'lucide-react';
+import { LabelDownloadSection } from '@/features/labels/components/LabelDownloadSection';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -15,6 +16,7 @@ import { Origin, Reason } from '@/types';
 interface MovementFormData {
   quantity: number;
   reason: Reason;
+  origin: Origin;
   detail?: string;
 }
 
@@ -85,6 +87,8 @@ export function ProductDetailPage() {
               Buscar
             </Button>
           </div>
+
+          <LabelDownloadSection product={product} />
         </CardContent>
       </Card>
     </div>
@@ -160,7 +164,9 @@ export function MovementFormPage() {
 
   const { data: product } = useProductByCode(decodedCode);
   const isInbound = type === 'inbound';
-  const mutation = isInbound ? useRegisterInbound() : useRegisterOutbound();
+  const inboundMutation = useRegisterInbound();
+  const outboundMutation = useRegisterOutbound();
+  const mutation = isInbound ? inboundMutation : outboundMutation;
 
   const reasons = isInbound ? inboundReasons : outboundReasons;
 
@@ -176,15 +182,18 @@ export function MovementFormPage() {
       z.object({
         quantity: z.number().int().min(1, 'La cantidad debe ser mayor a 0'),
         reason: z.nativeEnum(Reason),
+        origin: z.nativeEnum(Origin),
         detail: z.string().max(255).optional(),
       })
     ),
     defaultValues: {
       reason: reasons[0],
+      origin: Origin.MANUAL,
     },
   });
 
   const selectedReason = watch('reason');
+  const selectedOrigin = watch('origin');
 
   const onSubmit = async (data: MovementFormData) => {
     if (!product) return;
@@ -194,7 +203,7 @@ export function MovementFormPage() {
         productId: product.id,
         quantity: data.quantity,
         reason: data.reason,
-        origin: isInbound ? Origin.MANUAL : Origin.MANUAL,
+        origin: isInbound ? data.origin : Origin.MANUAL,
         detail: data.detail?.trim() || undefined,
       });
       navigate('/scanner');
@@ -238,6 +247,25 @@ export function MovementFormPage() {
               </div>
               {errors.reason && <p className="mt-1 text-sm text-red-600">{errors.reason.message}</p>}
             </div>
+
+            {isInbound && (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Origen</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[Origin.MANUAL, Origin.MACHINE].map((o) => (
+                    <Button
+                      key={o}
+                      type="button"
+                      variant={selectedOrigin === o ? 'primary' : 'secondary'}
+                      onClick={() => setValue('origin', o)}
+                    >
+                      {o === Origin.MANUAL ? 'Manual' : 'Máquina'}
+                    </Button>
+                  ))}
+                </div>
+                {errors.origin && <p className="mt-1 text-sm text-red-600">{errors.origin.message}</p>}
+              </div>
+            )}
 
             <Input
               label="Cantidad"

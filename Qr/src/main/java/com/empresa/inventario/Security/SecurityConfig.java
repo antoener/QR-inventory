@@ -66,10 +66,13 @@ public class SecurityConfig {
     public RateLimitFilter rateLimitFilter(
             @Value("${app.security.rate-limit.login-attempts:5}") int loginMaxRequests,
             @Value("${app.security.rate-limit.login-window-seconds:60}") long loginWindowSeconds,
+            @Value("${app.security.rate-limit.forgot-attempts:5}") int forgotMaxRequests,
+            @Value("${app.security.rate-limit.forgot-window-seconds:60}") long forgotWindowSeconds,
             @Value("${app.security.rate-limit.global-attempts:200}") int globalMaxRequests,
             @Value("${app.security.rate-limit.global-window-seconds:60}") long globalWindowSeconds,
             @Value("${app.security.trusted-proxies:}") String trustedProxies) {
         return new RateLimitFilter(objectMapper, loginMaxRequests, loginWindowSeconds,
+                forgotMaxRequests, forgotWindowSeconds,
                 globalMaxRequests, globalWindowSeconds, trustedProxies);
     }
 
@@ -110,6 +113,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/forgot-password").permitAll()
+                        .requestMatchers("/api/auth/reset-password").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         // Swagger: con swagger.enabled=true solo para ADMIN; si no, "NONE" nunca existe → bloqueado.
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**")

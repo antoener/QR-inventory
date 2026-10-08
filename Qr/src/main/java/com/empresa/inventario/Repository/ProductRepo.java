@@ -29,4 +29,10 @@ public interface ProductRepo extends JpaRepository<Product, Long> {
             "LOWER(CONCAT('%', :query, '%')) OR LOWER(p.name) LIKE " +
             "LOWER(CONCAT('%', :query, '%')) ORDER BY p.id ASC")
     List<Product> searchByCodeOrName(@Param("query") String query);
+
+    // Metricas para el dashboard.
+    long countByActiveTrue();
+
+    @Query("SELECT COALESCE(SUM(p.stock), 0) FROM Product p")
+    long sumStock();
 }

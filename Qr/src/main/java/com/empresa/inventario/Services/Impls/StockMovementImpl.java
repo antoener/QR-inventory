@@ -21,6 +21,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -143,13 +147,34 @@ public class StockMovementImpl implements IStockMovement {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<StockMovementResponse> findByPeriod(MovementPeriod period, Long productId, MovementType type) {
-        return List.of();
+        Instant since = period != null ? calculateCutoff(period) : Instant.EPOCH;
+
+        return stockMovementRepo.findByFilters(since, productId, type).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<StockMovementResponse> recent() {
-        return List.of();
+        return stockMovementRepo.findTop20ByOrderByCreatedAtDesc().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private Instant calculateCutoff(MovementPeriod period) {
+        ZoneId zone = ZoneId.systemDefault();
+        LocalDate today = LocalDate.now(zone);
+
+        LocalDate start = switch (period) {
+            case TODAY -> today;
+            case THIS_WEEK -> today.with(DayOfWeek.MONDAY);
+            case THIS_MONTH -> today.withDayOfMonth(1);
+        };
+
+        return start.atStartOfDay(zone).toInstant();
     }
 
     private User requireAuthenticatedUser() {

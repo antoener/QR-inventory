@@ -21,4 +21,16 @@ export const authApi = {
 
   changePassword: (data: ChangePasswordRequest) =>
     apiClient<void>('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+
+  forgotPassword: (email: string) =>
+    apiClient<void>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, newPassword: string) =>
+    apiClient<void>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    }),
 };
