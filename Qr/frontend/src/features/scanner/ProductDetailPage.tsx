@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, Minus, Package, Plus, Search } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, Search } from 'lucide-react';
 import { LabelDownloadSection } from '@/features/labels/components/LabelDownloadSection';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
@@ -71,8 +70,6 @@ export function ProductDetailPage() {
             <p className="text-5xl font-bold text-primary-700">{stock ?? 0}</p>
           </div>
 
-          <ProductionShortcut productId={product.id} />
-
           <div className="grid grid-cols-3 gap-2">
             <Button variant="secondary" onClick={() => navigate(`/p/${encodeURIComponent(decodedCode)}/inbound`)}>
               <Plus className="mr-1 h-4 w-4" />
@@ -92,68 +89,6 @@ export function ProductDetailPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function ProductionShortcut({ productId }: { productId: number }) {
-  const navigate = useNavigate();
-  const registerInbound = useRegisterInbound();
-  const [quantity, setQuantity] = useState<string>('');
-  const [detail, setDetail] = useState('');
-
-  const handleSubmit = async () => {
-    const qty = parseInt(quantity, 10);
-    if (!qty || qty <= 0) return;
-
-    try {
-      await registerInbound.mutateAsync({
-        productId,
-        quantity: qty,
-        reason: Reason.PRODUCTION,
-        origin: Origin.MACHINE,
-        detail: detail.trim() || undefined,
-      });
-      navigate('/scanner');
-    } catch {
-      // error handled by mutation state
-    }
-  };
-
-  return (
-    <Card className="border-primary-200 bg-primary-50">
-      <CardHeader>
-        <CardTitle className="text-base text-primary-900 flex items-center gap-2">
-          <Package className="h-4 w-4" />
-          Cargar producción
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Input
-          label="Cantidad"
-          type="number"
-          inputMode="numeric"
-          placeholder="5000"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-        />
-        <Input
-          label="Detalle (opcional)"
-          placeholder="Turno mañana, lote..."
-          value={detail}
-          onChange={(e) => setDetail(e.target.value)}
-        />
-        {registerInbound.isError && (
-          <p className="text-sm text-red-600">
-            {registerInbound.error instanceof ApiClientError
-              ? registerInbound.error.message
-              : 'Error al registrar la producción'}
-          </p>
-        )}
-        <Button className="w-full" onClick={handleSubmit} disabled={registerInbound.isPending}>
-          {registerInbound.isPending ? 'Guardando...' : 'Confirmar producción'}
-        </Button>
-      </CardContent>
-    </Card>
   );
 }
 

@@ -1,5 +1,6 @@
 import { Search } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useProducts, useUpdateProductStatus } from '@/features/products/hooks';
@@ -15,6 +16,7 @@ interface ProductListProps {
 function ProductList({ search, onEdit, onSelect }: ProductListProps) {
   const { data: products, isLoading, error } = useProducts(search || undefined);
   const toggleStatus = useUpdateProductStatus();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -70,6 +72,9 @@ function ProductList({ search, onEdit, onSelect }: ProductListProps) {
           <div className="ml-4 flex shrink-0 gap-2">
             <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); onEdit(product); }}>
               Editar
+            </Button>
+            <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/p/${encodeURIComponent(product.code)}`); }}>
+              Stock
             </Button>
             <Button
               variant={product.active ? 'ghost' : 'primary'}
