@@ -26,6 +26,9 @@ public class SecurityContextService {
             return Optional.empty();
         }
         String username = authentication.getName();
-        return userRepo.findByUsernameIgnoreCase(username);
+        // Username viene del token JWT (generado con case-sensitive correcto).
+        // Validación case-sensitive por seguridad extra.
+        return userRepo.findByUsernameIgnoreCase(username)
+                .filter(u -> u.getUsername().equals(username));
     }
 }

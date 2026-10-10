@@ -34,6 +34,7 @@ export interface ApiError {
   message: string;
   field: string | null;
   timestamp: string;
+  retryAfter?: number;
 }
 
 export interface UserResponse {

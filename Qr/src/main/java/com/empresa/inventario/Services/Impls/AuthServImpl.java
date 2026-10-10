@@ -80,10 +80,21 @@ public class AuthServImpl implements IAuthService {
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request, HttpServletResponse response) {
-        // Resuelve el identifier contra username o email (mensaje generico anti-enumeracion).
-        User user = userRepo.findByUsernameIgnoreCase(request.getIdentifier().trim())
-                .or(() -> userRepo.findByEmailIgnoreCase(request.getIdentifier().trim()))
+        String identifier = request.getIdentifier().trim();
+
+        // 1. Busca case-insensitive para encontrar el usuario (anti-enumeración)
+        User user = userRepo.findByUsernameIgnoreCase(identifier)
+                .or(() -> userRepo.findByEmailIgnoreCase(identifier))
                 .orElseThrow(() -> new InvalidCredentialsException("Credenciales invalidas"));
+
+        // 2. Validación case-sensitive: el identifier debe coincidir exactamente
+        // con username O email (no solo case-insensitive)
+        boolean matchesUsername = user.getUsername().equals(identifier);
+        boolean matchesEmail = user.getEmail().equals(identifier);
+
+        if (!matchesUsername && !matchesEmail) {
+            throw new InvalidCredentialsException("Credenciales invalidas");
+        }
 
         if (!user.isActive() || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Credenciales invalidas");

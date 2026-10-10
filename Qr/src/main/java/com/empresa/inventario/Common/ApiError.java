@@ -25,4 +25,12 @@ public class ApiError {
 
     // Momento del error (UTC).
     private Instant timestamp;
+
+    // Segundos restantes hasta que se permita reintentar (rate limit 429).
+    private Long retryAfter;
+
+    // Constructor para compatibilidad hacia atrás (sin retryAfter).
+    public ApiError(int status, String message, String field, Instant timestamp) {
+        this(status, message, field, timestamp, null);
+    }
 }

@@ -27,7 +27,7 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
       //Verifica si existe un usuario con el email dado.
      // Usado en el flujo de creación (alta) para validar unicidad.
-     boolean existsByEmail(String email);
+      boolean existsByEmail(String email);
 
 
      // Verifica si existe otro usuario (distinto al de :id) con el username dado.

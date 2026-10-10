@@ -79,19 +79,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
         long now = System.currentTimeMillis();
 
         if (isRateLimited(apiRequests, clientIp, now, globalMaxRequests, globalWindowSeconds)) {
-            writeTooManyRequests(response);
+            long retryAfter = calculateRetryAfter(clientIp, now, globalWindowSeconds, apiRequests);
+            writeTooManyRequests(response, retryAfter);
             return;
         }
 
         if (LOGIN_PATH.equals(uri)
                 && isRateLimited(loginAttempts, clientIp, now, loginMaxRequests, loginWindowSeconds)) {
-            writeTooManyRequests(response);
+            long retryAfter = calculateRetryAfter(clientIp, now, loginWindowSeconds, loginAttempts);
+            writeTooManyRequests(response, retryAfter);
             return;
         }
 
         if (FORGOT_PASSWORD_PATH.equals(uri)
                 && isRateLimited(forgotPasswordAttempts, clientIp, now, forgotMaxRequests, forgotWindowSeconds)) {
-            writeTooManyRequests(response);
+            long retryAfter = calculateRetryAfter(clientIp, now, forgotWindowSeconds, forgotPasswordAttempts);
+            writeTooManyRequests(response, retryAfter);
             return;
         }
 
@@ -153,10 +156,22 @@ public class RateLimitFilter extends OncePerRequestFilter {
         });
     }
 
-    private void writeTooManyRequests(HttpServletResponse response) throws IOException {
+    private long calculateRetryAfter(String key, long now, long windowSeconds, Map<String, LinkedList<Long>> map) {
+        LinkedList<Long> timestamps = map.get(key);
+        if (timestamps == null || timestamps.isEmpty()) {
+            return windowSeconds;
+        }
+        synchronized (timestamps) {
+            long oldest = timestamps.getFirst();
+            long remainingMs = (oldest + windowSeconds * 1000) - now;
+            return Math.max(1, remainingMs / 1000);
+        }
+    }
+
+    private void writeTooManyRequests(HttpServletResponse response, long retryAfter) throws IOException {
         response.setStatus(429);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getWriter(),
-                new ApiError(429, "Demasiadas solicitudes. Espera un momento e intentalo de nuevo.", null, Instant.now()));
+                new ApiError(429, "Demasiadas solicitudes. Espera un momento e intentalo de nuevo.", null, Instant.now(), retryAfter));
     }
 }
